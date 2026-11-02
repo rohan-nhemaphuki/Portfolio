@@ -1,5 +1,9 @@
 html{
   scroll-behavior: auto;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar{
+  display: none;
 }
 * {
   margin: 0;
