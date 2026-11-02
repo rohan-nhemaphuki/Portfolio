@@ -2,9 +2,11 @@ html{
   scroll-behavior: auto;
   scrollbar-width: none;
 }
+
 html::-webkit-scrollbar{
   display: none;
 }
+
 * {
   margin: 0;
   padding: 0;
@@ -205,7 +207,7 @@ h2 {
 
 .card {
   background: rgba(255,255,255,0.05);
-  padding: 20px;
+  padding: 25px 28px;
   border-radius: 15px;
   border: 1px solid rgba(255,255,255,0.1);
   transition: 0.3s;
@@ -419,3 +421,11 @@ nav ul li a:hover::after {
     line-height: 1.6;
   }
 }
+
+.project-link{
+	display: inline-block;
+	color: white;
+	font-weight: 600;
+}
+
+
