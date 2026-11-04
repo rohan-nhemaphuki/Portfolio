@@ -25,14 +25,9 @@ async function fetchGitHubProjects() {
         while (true) {
 
             const API_URL =
-                `https://api.github.com/users/${GITHUB_USERNAME}/repos?per_page=100&page=${page}&sort=updated`;
+    `https://rohan-github-api.rohannhemaphuki.workers.dev/repos?per_page=100&page=${page}`;
 
-            const response = await fetch(API_URL, {
-                headers: {
-                    "Accept": "application/vnd.github+json"
-                },
-                cache: "no-store"
-            });
+const response = await fetch(API_URL);
 
             if (!response.ok) {
 
