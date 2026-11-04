@@ -1,17 +1,23 @@
 
-
-// GitHub username
+// GitHub configuration
 const GITHUB_USERNAME = "rohan-nhemaphuki";
-
-// Required GitHub repository topic
 const PROJECT_TOPIC = "portfolio";
 
-// Projects container
-const projectsContainer = document.getElementById("github-projects");
+// Cloudflare Worker URL
+const WORKER_URL =
+    "https://rohan-github-api.rohannhemaphuki.workers.dev";
 
+// Projects container
+const projectsContainer =
+    document.getElementById("github-projects");
 
 
 async function fetchGitHubProjects() {
+
+    if (!projectsContainer) {
+        console.error("GitHub projects container not found.");
+        return;
+    }
 
     try {
 
@@ -21,28 +27,25 @@ async function fetchGitHubProjects() {
         let repositories = [];
         let page = 1;
 
-        // Fetch all public repositories (100 per page)
+        // Fetch all repositories
         while (true) {
 
             const API_URL =
-    `https://rohan-github-api.rohannhemaphuki.workers.dev/repos?per_page=100&page=${page}`;
+                `${WORKER_URL}/repos?page=${page}`;
 
-const response = await fetch(API_URL);
+            const response = await fetch(API_URL);
 
             if (!response.ok) {
-
-                if (response.status === 403 || response.status === 429) {
-                    throw new Error(
-                        "GitHub API rate limit reached. Please try again later."
-                    );
-                }
-
                 throw new Error(
-                    `GitHub API request failed: ${response.status}`
+                    `API request failed: ${response.status}`
                 );
             }
 
             const data = await response.json();
+
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid GitHub API response.");
+            }
 
             repositories = repositories.concat(data);
 
@@ -53,81 +56,75 @@ const response = await fetch(API_URL);
             page++;
         }
 
-
-
-
-        const projects = repositories.filter(repo => {
-
-            return (
+        // Filter portfolio projects
+        const projects = repositories
+            .filter(repo =>
                 Array.isArray(repo.topics) &&
                 repo.topics.includes(PROJECT_TOPIC) &&
                 !repo.fork &&
                 !repo.archived
+            )
+            .sort((a, b) =>
+                new Date(b.updated_at) -
+                new Date(a.updated_at)
             );
 
-        });
-
-
-        // Clear loading message
+        // Clear previous content
         projectsContainer.innerHTML = "";
 
-
+        // No projects found
         if (projects.length === 0) {
 
-            projectsContainer.innerHTML =
-                '<p class="project-status">No projects found. Add the "portfolio" topic to your GitHub repositories.</p>';
+            projectsContainer.textContent =
+                'No projects found. Add the "portfolio" topic to your GitHub repositories.';
 
             return;
         }
 
-
+        // Create project cards
         projects.forEach(project => {
 
-            // Main card
             const card = document.createElement("div");
             card.className = "card";
 
-
             // Project title
             const title = document.createElement("h3");
+
             title.textContent = project.name.replace(/-/g, " ");
 
+            // Horizontal line
+            const separator = document.createElement("hr");
 
             // Project description
             const description = document.createElement("p");
-            description.textContent =
-                project.description || "No description available.";
 
-            // Project information
+            description.textContent =
+                project.description ||
+                "No description available.";
+
+            // Project update date
             const meta = document.createElement("div");
+
             meta.className = "project-meta";
 
-	meta.append(document.createElement("br"));
-            // Programming language
-            const language = document.createElement("span");
-            language.textContent =
-                project.language || "Not specified";
-
-
-            // Last updated date
             const updated = document.createElement("span");
 
             const updateDate = new Date(project.updated_at);
 
             updated.textContent =
-                " Updated: " +
-                updateDate.toLocaleDateString("en-GB");
+                "Updated: " +
+                (
+                    Number.isNaN(updateDate.getTime())
+                        ? "Unknown"
+                        : updateDate.toLocaleDateString("en-GB")
+                );
 
-
-            	meta.append(language);
-
-		meta.append(updated);
-
+            meta.appendChild(updated);
 
             // Project links
             const links = document.createElement("div");
-            links.className = "project-links";
 
+            links.className = "project-links";
 
             // GitHub repository link
             const githubLink = document.createElement("a");
@@ -138,12 +135,9 @@ const response = await fetch(API_URL);
             githubLink.target = "_blank";
             githubLink.rel = "noopener noreferrer";
 
-	links.appendChild(document.createElement("br"));
             links.appendChild(githubLink);
 
-
-
-            // Live demo link (if available)
+            // Live demo link
             if (project.homepage) {
 
                 try {
@@ -155,43 +149,45 @@ const response = await fetch(API_URL);
                         demoURL.protocol === "http:"
                     ) {
 
-                        const demoLink = document.createElement("a");
+                        const demoLink =
+                            document.createElement("a");
 
                         demoLink.href = demoURL.href;
                         demoLink.textContent = "Live Demo";
                         demoLink.className = "project-link";
                         demoLink.target = "_blank";
                         demoLink.rel = "noopener noreferrer";
-			links.appendChild(document.createTextNode(" | "));
+
+                        links.appendChild(
+                            document.createTextNode(" | ")
+                        );
+
                         links.appendChild(demoLink);
                     }
 
                 } catch (error) {
 
                     console.warn(
-                        "Invalid project homepage:",
+                        "Invalid homepage URL:",
                         project.name
                     );
 
                 }
             }
 
-
-            // Assemble card
+            // Assemble project card
             card.append(
                 title,
-		document.createElement("br"),
+                separator,
                 description,
                 meta,
                 links
             );
 
-
-            // Add card to website
+            // Display project
             projectsContainer.appendChild(card);
 
         });
-
 
         console.log(
             `${projects.length} GitHub projects loaded successfully.`
@@ -207,17 +203,19 @@ const response = await fetch(API_URL);
 
         const errorMessage = document.createElement("p");
 
-        errorMessage.className = "project-status project-error";
+        errorMessage.className =
+            "project-status project-error";
+
         errorMessage.textContent =
             "Unable to load projects. Please try again later.";
 
         projectsContainer.appendChild(errorMessage);
 
     }
-
 }
 
 
+// Initialize
 if (projectsContainer) {
     fetchGitHubProjects();
 }
